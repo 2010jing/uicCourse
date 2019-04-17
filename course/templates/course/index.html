@@ -1,3 +1,4 @@
+{% load url_replace %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,102 +6,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Login request | Course Index</title>
-    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    {% load static %}
-    <link href="{% static "course/css/login_page.css" %}" rel="stylesheet">
-    <style>
+    <link rel="icon" href="favicon.ico">
+    <title>uicCourse</title>
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <!-- Custom styles for this template -->
+    <style type="text/css">
+        /* Sticky footer styles
+        -------------------------------------------------- */
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+
         body {
-            background-image: url("https://source.unsplash.com/daily");
-            background-size: cover;
+            /* Margin bottom by footer height */
+            margin-bottom: 60px;
         }
 
-        .site-wrapper-inner {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
 
-        .login-card {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-        }
     </style>
+    {% load static %}
 </head>
+
 <body>
-<div class="site-wrapper-inner" style="background-color: rgba(0, 0, 0, 0.5);">
-    <div class="container d-flex justify-content-center align-items-center">
-        <div class="d-flex p-2">
-            {% if messages %}
-                {% for message in messages %}
-                    {% if message.tags == 'success' %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {% else %}
-                        {% if message.tags == 'warning' %}
-                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        {% else %}
-                            {% if message.tags == 'error' %}
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {% else %}
-                                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                            {% endif %}
-                        {% endif %}
-                    {% endif %}
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                </div>
-                {% endfor %}
+{% include "course/header.html" %}
+{% include "course/messager.html" %}
+<main role="main" class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mt-md-3">{% if filter_status.is_filtered %}
+            {% if filter_status.major is not None %}
+            {{ filter_status.major }}
             {% endif %}
-            </div>
-            <div class="card text-white bg-dark mb-3 login-card" style="width: 412px;">
-                <div class="card-body">
-                    <h4 title="card-title">Login to uicCourse</h4>
-                    <br>
-                    <form action="{% url 'login_receiver' %}" method="post">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Username" name="username">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" class="form-control" placeholder="Password" name="password">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Login</button>
-                        <a href="{% url 'signup_invite' %}" class="btn btn-success">Sign up</a>
-                    </form>
-                </div>
-                <div class="card-footer">
-                    <div class="row">
-                        <a href="https://uichcc.com">
-                            <img src="https://uichcc.com/img/uichccwhite.svg" style="height: 30px; margin-left: 1rem;"
-                                 title="UIC HCC Computer Society">
-                        </a>
-                        <span class="d-flex align-items-center text-white" style="margin-left: 1rem;: ">uicCourse
-						<span class="badge badge-warning" style="margin: 0 0.5rem;" data-toggle="tooltip"
-                              data-placement="right" title="Login is required.">
-						Early Access
-						</span>
-					</span>
-                    </div>
-                </div>
-            </div>
-            </div>
+            {% if filter_status.category is not None %}
+            {{ filter_status.category }}
+            {% endif %}
+        {% endif %} Course List
+            <button class="btn btn-outline-dark btn-sm" type="button" data-toggle="collapse" data-target="#collapseSelectControl"
+                    aria-expanded="false" aria-controls="collapseSelectControl">
+                <i class="fa fa-filter" aria-hidden="true"></i>
+            </button>
+        </h1>
+        <form class="my-2" action="{% url 'search_course' %}">
+            <input class="form-control" type="text" placeholder="Search course" autocomplete="off" name="search"
+                   value="{% if search_result %}{{ raw_input }}{% endif %}">
+        </form>
+        {% if user.is_superuser or user.is_staff %}
+            <a href="{% url 'course_create' %}" class="btn btn-primary">Create Course</a>
+        {% endif %}
+    </div>
+    <div class="collapse pt-3 pb-3" id="collapseSelectControl">
+    {% if coursetypes %}
+        <div class="btn-group">
+            <button type="button" class="btn btn-info">Category</button>
+            <button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Category Dropdown</span>
+            </button>
+            <div class="dropdown-menu">
+                {% for ct in coursetypes %}
+                <a class="dropdown-item" href="{{ request.path }}?category={{ ct.id }}">{{ ct.name }}</a>
+                {% endfor %}
             </div>
         </div>
+    {% endif %}
+    {% if majors %}
+        <div class="btn-group">
+            <button type="button" class="btn btn-success">Major</button>
+            <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">Toggle Major Dropdown</span>
+            </button>
+            <div class="dropdown-menu">
+                {% for major in majors %}
+                <a class="dropdown-item" href="{{ request.path }}?major={{ major.id }}">{{ major.major }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 
-        <!-- Bootstrap core JavaScript
-        ================================================== -->
-        <!-- Placed at the end of the document so the pages load faster -->
-        <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"></script>
-        {% load static %}
-        <script src="{% static "js/popper.min.js" %}"></script>
-        <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-        <script>
-            $(function () {
-                $('[data-toggle="tooltip"]').tooltip()
-            })
-        </script>
+    </div>
+
+    {% if courses %}
+        <div class="card-columns">
+            {% for course in courses %}
+                <a href="{% url 'course_detail' course.id %}">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><span
+                                    class="badge badge-secondary">{{ course.course_id }}</span> {{ course.course_name_en }}
+                            </h5>
+                            <p class="card-text">{{ course.course_name_cn }}</p>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <h1 class="display-4">No course data</h1>
+                <p class="lead">Please check it out later.</p>
+            </div>
+        </div>
+    {% endif %}
+    <div style="margin-bottom: 5rem;">
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if courses.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=1 %}" aria-label="Previous">
+                            <span aria_hidden="true">&laquo;</span></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=courses.previous_page_number %}" aria-label="Previous">
+                            <span aria_hidden="true">&lsaquo;</span></a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active"><a class="page-link"
+                                                href="?{% url_replace page=courses.number %}">Page {{ courses.number }}
+                    of {{ courses.paginator.num_pages }}</a></li>
+
+                {% if courses.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=courses.next_page_number %}" aria-label="Next">
+                            <span aria_hidden="true">&rsaquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+
+                        <a class="page-link" href="?{% url_replace page=courses.paginator.num_pages %}" aria-label="Next">
+                            <span aria_hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</main>
+{% include "course/footer.html" %}
 </body>
 </html>
